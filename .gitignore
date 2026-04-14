@@ -1,0 +1,9 @@
+target/
+*.class
+*.ser
+*.iml
+.idea/
+.vscode/
+*.log
+receipts/*.txt
+receipts/*.ser
