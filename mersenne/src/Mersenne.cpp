@@ -1,12 +1,9 @@
 #include "Mersenne.h"
 #include <iostream>
+#include <algorithm>
 #include <cstdio>
 
 using namespace std;
-
-// ------------------------------------------------------------------ //
-//  Вътрешни (private) методи                                          //
-// ------------------------------------------------------------------ //
 
 bool Mersenne::lucasLehmer(int p) {
     if (p == 2) return true;
@@ -14,39 +11,31 @@ bool Mersenne::lucasLehmer(int p) {
     ull s  = 4;
     for (int i = 0; i < p - 2; i++) {
         s = (__uint128_t)s * s % mp;
-        if (s >= 2)
-            s = s - 2;
-        else
-            s = s + mp - 2;
+        s = (s >= 2) ? s - 2 : s + mp - 2;
     }
     return s == 0;
 }
 
-int Mersenne::getAllDivisors(ull n, ull arr[], int maxSize) {
-    int count = 0;
+vector<ull> Mersenne::allDivisors(ull n) {
+    vector<ull> divs;
     for (ull i = 2; i <= n / i; i++) {
         if (n % i == 0) {
-            if (count < maxSize) arr[count++] = i;
-            if (i != n / i && count < maxSize) arr[count++] = n / i;
+            divs.push_back(i);
+            if (i != n / i) divs.push_back(n / i);
         }
     }
-    sortArr(arr, count);
-    return count;
+    sortAndUnique(divs);
+    return divs;
 }
 
-int Mersenne::getCompositeDivisors(ull n, ull arr[], int maxSize) {
-    ull all[MAX_SIZE];
-    int total = getAllDivisors(n, all, MAX_SIZE);
-    int count = 0;
-    for (int i = 0; i < total; i++) {
-        if (!isPrime(all[i]) && count < maxSize)
-            arr[count++] = all[i];
+vector<ull> Mersenne::compositeDivisors(ull n) {
+    vector<ull> result;
+    for (auto d : allDivisors(n)) {
+        if (!isPrime(d)) result.push_back(d);
     }
-    return count;
+    return result;
 }
 
-// ------------------------------------------------------------------ //
-//  Публични методи                                                     //
 // ------------------------------------------------------------------ //
 
 bool Mersenne::isMersenne(ull n) {
@@ -55,118 +44,87 @@ bool Mersenne::isMersenne(ull n) {
 
 bool Mersenne::isMersennePrime(ull n) {
     int p = getExponent(n);
-    if (p == -1) return false;
+    if (p == -1)         return false;
     if (!isPrime((ull)p)) return false;
     return lucasLehmer(p);
 }
 
-void Mersenne::showDivisors(ull n) {
+vector<ull> Mersenne::getDivisors(ull n) {
     if (n < 2) {
-        cout << "  Грешка: n трябва да е >= 2" << endl;
-        return;
+        cout << "Грешка: n трябва да е >= 2" << endl;
+        return {};
     }
-    ull arr[MAX_SIZE];
-    int count = getAllDivisors(n, arr, MAX_SIZE);
-    if (count == 0) {
-        cout << "  " << n << " е просто — няма делители освен 1 и себе си." << endl;
-        return;
-    }
-    cout << "  Делители на " << n << ": ";
-    for (int i = 0; i < count; i++) {
-        cout << arr[i];
-        if (i < count - 1) cout << ", ";
-    }
-    cout << endl;
+    return allDivisors(n);
 }
 
-int Mersenne::getPrimeDivisors(ull n, ull arr[], int maxSize) {
-    ull all[MAX_SIZE];
-    int total = getAllDivisors(n, all, MAX_SIZE);
-    int count = 0;
-    for (int i = 0; i < total; i++) {
-        if (isPrime(all[i]) && count < maxSize)
-            arr[count++] = all[i];
+vector<ull> Mersenne::getPrimeDivisors(ull n) {
+    vector<ull> result;
+    for (auto d : allDivisors(n)) {
+        if (isPrime(d)) result.push_back(d);
     }
-    return count;
+    return result;
 }
 
-int Mersenne::compositeDivisorsDiff(ull a, ull b, ull arr[], int maxSize) {
-    ull ca[MAX_SIZE], cb[MAX_SIZE];
-    int na = getCompositeDivisors(a, ca, MAX_SIZE);
-    int nb = getCompositeDivisors(b, cb, MAX_SIZE);
+vector<ull> Mersenne::compositeDivisorsDiff(ull a, ull b) {
+    auto ca = compositeDivisors(a);
+    auto cb = compositeDivisors(b);
 
-    int count = 0;
-    for (int i = 0; i < na; i++) {
-        bool found = false;
-        for (int j = 0; j < nb; j++) {
-            if (ca[i] == cb[j]) { found = true; break; }
-        }
-        if (!found && count < maxSize)
-            arr[count++] = ca[i];
+    vector<ull> diff;
+    for (auto x : ca) {
+        if (find(cb.begin(), cb.end(), x) == cb.end())
+            diff.push_back(x);
     }
-    return count;
+    return diff;
 }
 
-void Mersenne::showInRange(ull low, ull high) {
+vector<ull> Mersenne::inRange(ull low, ull high) {
     if (low > high || high > MAX_VAL) {
-        cout << "  Грешка: невалиден интервал." << endl;
-        return;
+        cout << "Грешка: невалиден интервал" << endl;
+        return {};
     }
-    cout << "  Мерсенови числа в [" << low << ", " << high << "]: ";
-    bool found = false;
+    vector<ull> result;
     for (int p = 2; p <= 62; p++) {
         ull m = (1ULL << p) - 1;
         if (m > high) break;
-        if (m >= low) { cout << m << "  "; found = true; }
+        if (m >= low) result.push_back(m);
     }
-    if (!found) cout << "(няма)";
-    cout << endl;
+    return result;
 }
 
-void Mersenne::showFirst(int n) {
-    if (n <= 0) { cout << "  Грешка: n > 0" << endl; return; }
-    cout << "  Първите " << n << " мерсенови числа: ";
-    int count = 0;
-    for (int p = 2; count < n && p <= 62; p++) {
+vector<ull> Mersenne::first(int n) {
+    if (n <= 0) { cout << "Грешка: n > 0" << endl; return {}; }
+    vector<ull> result;
+    for (int p = 2; (int)result.size() < n && p <= 62; p++) {
         ull m = (1ULL << p) - 1;
         if (m > MAX_VAL) break;
-        cout << m << "  ";
-        count++;
+        result.push_back(m);
     }
-    cout << endl;
+    return result;
 }
 
-void Mersenne::showFirstPrimes(int n) {
-    if (n <= 0 || n > 9) { cout << "  Грешка: n между 1 и 9" << endl; return; }
-    cout << "  Първите " << n << " мерсенови прости числа: ";
-    int count = 0;
-    for (int p = 2; count < n && p <= 61; p++) {
+vector<ull> Mersenne::firstPrimes(int n) {
+    if (n <= 0 || n > 9) { cout << "Грешка: n между 1 и 9" << endl; return {}; }
+    vector<ull> result;
+    for (int p = 2; (int)result.size() < n && p <= 61; p++) {
         if (!isPrime((ull)p)) continue;
-        if (lucasLehmer(p)) {
-            cout << (1ULL << p) - 1 << "  ";
-            count++;
-        }
+        if (lucasLehmer(p)) result.push_back((1ULL << p) - 1);
     }
-    cout << endl;
+    return result;
 }
 
-int Mersenne::getNPrimes(int n, ull arr[], int maxSize) {
-    if (n <= 0 || n > 9) return 0;
-    int count = 0;
-    for (int p = 2; count < n && p <= 61; p++) {
-        if (!isPrime((ull)p)) continue;
-        if (lucasLehmer(p) && count < maxSize)
-            arr[count++] = (1ULL << p) - 1;
-    }
-    return count;
+vector<ull> Mersenne::getNPrimes(int n) {
+    return firstPrimes(n);
 }
 
-int Mersenne::perfectNumbersRepr(int n, char arr[][64]) {
-    if (n <= 0 || n > 8) { cout << "  Грешка: n между 1 и 8" << endl; return 0; }
+vector<string> Mersenne::perfectNumbersRepr(int n) {
+    if (n <= 0 || n > 8) { cout << "Грешка: n между 1 и 8" << endl; return {}; }
     int exponents[] = {2, 3, 5, 7, 13, 17, 19, 31};
+    vector<string> result;
     for (int i = 0; i < n; i++) {
         int p = exponents[i];
-        sprintf(arr[i], "2^(%d-1).(2^%d-1)", p, p);
+        char buf[64];
+        sprintf(buf, "2^(%d-1).(2^%d-1)", p, p);
+        result.push_back(buf);
     }
-    return n;
+    return result;
 }
