@@ -1,91 +1,101 @@
 #include <iostream>
-#include <iomanip>
-#include <stdexcept>
 #include "Mersenne.h"
-#include "Utils.h"
 
-static void sep(const std::string& title) {
-    std::cout << "\n--- " << title << " ---\n";
-}
+using namespace std;
 
-static void printVec(const std::vector<uint64_t>& v) {
-    if (v.empty()) { std::cout << "(празно)\n"; return; }
-    for (uint64_t x : v) std::cout << x << "  ";
-    std::cout << "\n";
+void sep(const char* title) {
+    cout << "\n--- " << title << " ---" << endl;
 }
 
 int main() {
-    std::cout << "================================================\n";
-    std::cout << "   МЕРСЕНОВИ ЧИСЛА — C++ демонстрация\n";
-    std::cout << "================================================\n";
+    Mersenne m;
 
-    // 1. isMersenne
+    cout << "================================================" << endl;
+    cout << "   МЕРСЕНОВИ ЧИСЛА — C++ демонстрация"           << endl;
+    cout << "================================================" << endl;
+
+    // 1
     sep("1. Проверка: число на Мерсен?");
-    for (uint64_t n : {3ULL, 7ULL, 10ULL, 15ULL, 31ULL, 63ULL, 127ULL}) {
-        std::cout << "  " << std::setw(4) << n
-                  << " -> " << (Mersenne::isMersenne(n) ? "ДА" : "НЕ") << "\n";
+    ull test1[] = {3, 7, 10, 15, 31, 63, 127};
+    for (int i = 0; i < 7; i++) {
+        cout << "  " << test1[i] << " -> "
+             << (m.isMersenne(test1[i]) ? "ДА" : "НЕ") << endl;
     }
 
-    // 2. isMersennePrime
+    // 2
     sep("2. Проверка: просто мерсеново число?");
-    for (uint64_t n : {3ULL, 7ULL, 15ULL, 31ULL, 127ULL, 2047ULL, 8191ULL}) {
-        if (Mersenne::isMersenne(n)) {
-            std::cout << "  " << std::setw(5) << n
-                      << " -> " << (Mersenne::isMersennePrime(n) ? "ПРОСТО" : "СЪСТАВНО") << "\n";
+    ull test2[] = {3, 7, 15, 31, 127, 2047, 8191};
+    for (int i = 0; i < 7; i++) {
+        if (m.isMersenne(test2[i])) {
+            cout << "  " << test2[i] << " -> "
+                 << (m.isMersennePrime(test2[i]) ? "ПРОСТО" : "СЪСТАВНО") << endl;
         }
     }
 
-    // 3. getDivisors
+    // 3
     sep("3. Делители (без 1 и самото число)");
-    for (uint64_t n : {12ULL, 28ULL, 31ULL, 60ULL}) {
-        std::cout << "  Делители на " << n << ": ";
-        try { printVec(Mersenne::getDivisors(n)); }
-        catch (const std::exception& e) { std::cout << e.what() << "\n"; }
+    ull test3[] = {12, 28, 31, 60};
+    for (int i = 0; i < 4; i++) {
+        m.showDivisors(test3[i]);
     }
 
-    // 4. getPrimeDivisors
+    // 4
     sep("4. Прости делители");
-    for (uint64_t n : {60ULL, 360ULL, 2310ULL}) {
-        std::cout << "  Прости делители на " << n << ": ";
-        printVec(Mersenne::getPrimeDivisors(n));
+    ull pd[MAX_SIZE];
+    int pc;
+    ull test4[] = {60, 360, 2310};
+    for (int i = 0; i < 3; i++) {
+        pc = m.getPrimeDivisors(test4[i], pd, MAX_SIZE);
+        cout << "  Прости делители на " << test4[i] << ": ";
+        for (int j = 0; j < pc; j++) cout << pd[j] << " ";
+        cout << endl;
     }
 
-    // 5. compositeDivisorsDiff
+    // 5
     sep("5. Разлика на съставни делители (A \\ B)");
-    auto diff1 = Mersenne::compositeDivisorsDiff(120, 60);
-    std::cout << "  Съставни(120) \\ Съставни(60)  : "; printVec(diff1);
+    ull diff[MAX_SIZE];
+    int dc;
 
-    auto diff2 = Mersenne::compositeDivisorsDiff(60, 48);
-    std::cout << "  Съставни(60)  \\ Съставни(48)  : "; printVec(diff2);
+    dc = m.compositeDivisorsDiff(120, 60, diff, MAX_SIZE);
+    cout << "  Съставни(120) \\ Съставни(60): ";
+    for (int i = 0; i < dc; i++) cout << diff[i] << " ";
+    cout << endl;
 
-    // 6. inRange
+    dc = m.compositeDivisorsDiff(60, 48, diff, MAX_SIZE);
+    cout << "  Съставни(60)  \\ Съставни(48): ";
+    for (int i = 0; i < dc; i++) cout << diff[i] << " ";
+    cout << endl;
+
+    // 6
     sep("6. Мерсенови числа в интервал");
-    std::cout << "  [1, 10000]:     "; printVec(Mersenne::inRange(1, 10000));
-    std::cout << "  [100, 1000000]: "; printVec(Mersenne::inRange(100, 1000000));
+    m.showInRange(1, 10000);
+    m.showInRange(100, 1000000);
 
-    // 7. first
+    // 7
     sep("7. Първите 10 мерсенови числа");
-    printVec(Mersenne::first(10));
+    m.showFirst(10);
 
-    // 8. firstPrimes
+    // 8
     sep("8. Първите 6 мерсенови прости числа");
-    printVec(Mersenne::firstPrimes(6));
+    m.showFirstPrimes(6);
 
-    // 9. getNPrimes — всичките 9
+    // 9
     sep("9. Всичките 9 мерсенови прости числа");
-    auto all9 = Mersenne::getNPrimes(9);
-    for (uint64_t mp : all9) {
-        int p = utils::getExponent(mp);
-        std::cout << "  M_" << std::setw(2) << p
-                  << " = 2^" << p << " - 1 = " << mp << "\n";
+    ull primes[9];
+    int cnt = m.getNPrimes(9, primes, 9);
+    for (int i = 0; i < cnt; i++) {
+        int p = getExponent(primes[i]);
+        cout << "  M_" << p << " = 2^" << p << " - 1 = " << primes[i] << endl;
     }
 
-    // 10. perfectNumbersRepr
+    // 10
     sep("10. Представяне на съвършените числа");
-    for (const auto& s : Mersenne::perfectNumbersRepr(8)) {
-        std::cout << "  " << s << "\n";
+    char repr[8][64];
+    int nr = m.perfectNumbersRepr(8, repr);
+    for (int i = 0; i < nr; i++) {
+        cout << "  " << repr[i] << endl;
     }
 
-    std::cout << "\n================================================\n";
+    cout << "\n================================================" << endl;
     return 0;
 }
