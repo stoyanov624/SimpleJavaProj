@@ -2,14 +2,9 @@ package com.shop.model;
 
 import java.time.LocalDate;
 
-/**
- * Нехранителна стока — с по-ниска надценка спрямо хранителните.
- */
 public class NonFoodProduct extends Product {
 
     private static final long serialVersionUID = 1L;
-
-    // Надценката за нехранителни стоки (в проценти)
     private static double nonFoodMarkupPercent = 50.0;
 
     public NonFoodProduct(int id, String name, double deliveryPrice, LocalDate expiryDate, int quantity) {
@@ -17,20 +12,11 @@ public class NonFoodProduct extends Product {
     }
 
     @Override
-    public double getMarkupPercent() {
-        return nonFoodMarkupPercent;
-    }
+    public double getMarkupPercent() { return nonFoodMarkupPercent; }
 
-    public static void setNonFoodMarkupPercent(double percent) {
-        nonFoodMarkupPercent = percent;
-    }
-
-    public static double getNonFoodMarkupPercent() {
-        return nonFoodMarkupPercent;
-    }
+    public static void setNonFoodMarkupPercent(double percent) { nonFoodMarkupPercent = percent; }
+    public static double getNonFoodMarkupPercent() { return nonFoodMarkupPercent; }
 
     @Override
-    public String toString() {
-        return "[НЕ-ХРАНА] " + super.toString();
-    }
+    public String toString() { return "[НЕ-ХРАНА] " + super.toString(); }
 }

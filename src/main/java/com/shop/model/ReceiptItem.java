@@ -2,16 +2,13 @@ package com.shop.model;
 
 import java.io.Serializable;
 
-/**
- * Един ред в касовата бележка — стока + количество + единична цена.
- */
 public class ReceiptItem implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private Product product;
     private int quantity;
-    private double unitPrice;  // записваме цената в момента на продажбата
+    private double unitPrice;
 
     public ReceiptItem(Product product, int quantity) {
         this.product = product;

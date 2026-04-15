@@ -9,160 +9,102 @@ import com.shop.service.Shop;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Главна точка на влизане в програмата.
- * Демонстрира всички функционалности на системата.
- */
 public class Main {
 
     public static void main(String[] args) {
-
         System.out.println("=== СИСТЕМА ЗА УПРАВЛЕНИЕ НА МАГАЗИН ===\n");
 
-        // -------------------------------------------------------
-        // 1. Конфигурация на надценките и намаленията
-        // -------------------------------------------------------
-        FoodProduct.setFoodMarkupPercent(30.0);          // +30% за хранителни
-        NonFoodProduct.setNonFoodMarkupPercent(50.0);    // +50% за нехранителни
-        Product.setExpiryWarningDays(3);                  // предупреждение 3 дни преди
-        Product.setDiscountPercent(20.0);                 // 20% намаление при наближаване
+        configureMarkups();
+        Shop shop = buildShop();
+        deliverProducts(shop);
+        printAvailableProducts(shop);
+        runSaleScenarios(shop);
+        demonstrateSerialization(shop);
+        shop.printFinancialReport();
+    }
 
-        // -------------------------------------------------------
-        // 2. Създаване на магазина
-        // -------------------------------------------------------
+    private static void configureMarkups() {
+        FoodProduct.setFoodMarkupPercent(30.0);
+        NonFoodProduct.setNonFoodMarkupPercent(50.0);
+        Product.setExpiryWarningDays(3);
+        Product.setDiscountPercent(20.0);
+    }
+
+    private static Shop buildShop() {
         Shop shop = new Shop("Супермаркет Примерен");
 
-        // -------------------------------------------------------
-        // 3. Добавяне на касиери и каси
-        // -------------------------------------------------------
         Cashier cashier1 = new Cashier(1, "Иван Петров", 1500.00);
         Cashier cashier2 = new Cashier(2, "Мария Георгиева", 1400.00);
         shop.addCashier(cashier1);
         shop.addCashier(cashier2);
 
-        CashRegister register1 = new CashRegister(1, cashier1);
-        CashRegister register2 = new CashRegister(2, cashier2);
-        shop.addRegister(register1);
-        shop.addRegister(register2);
+        shop.addRegister(new CashRegister(1, cashier1));
+        shop.addRegister(new CashRegister(2, cashier2));
 
-        // -------------------------------------------------------
-        // 4. Доставка на стоки
-        // -------------------------------------------------------
-        // Нормална хранителна стока
-        Product milk = new FoodProduct(1, "Прясно мляко 1л", 1.50, LocalDate.now().plusDays(10), 50);
+        return shop;
+    }
 
-        // Стока с наближаващ срок (→ ще получи намаление)
-        Product bread = new FoodProduct(2, "Хляб Добруджа", 0.80, LocalDate.now().plusDays(2), 30);
+    private static void deliverProducts(Shop shop) {
+        shop.deliverProduct(new FoodProduct(1, "Прясно мляко 1л", 1.50, LocalDate.now().plusDays(10), 50));
+        shop.deliverProduct(new FoodProduct(2, "Хляб Добруджа", 0.80, LocalDate.now().plusDays(2), 30));
+        shop.deliverProduct(new NonFoodProduct(3, "Шампоан Pantene 400мл", 5.00, LocalDate.now().plusDays(365), 20));
+        shop.deliverProduct(new FoodProduct(4, "Кисело мляко 400г", 0.90, LocalDate.now().minusDays(1), 5));
+    }
 
-        // Нехранителна стока
-        Product shampoo = new NonFoodProduct(3, "Шампоан Pantene 400мл", 5.00, LocalDate.now().plusDays(365), 20);
-
-        // Стока с изтекъл срок (не може да се продава)
-        Product expiredYogurt = new FoodProduct(4, "Кисело мляко 400г", 0.90, LocalDate.now().minusDays(1), 5);
-
-        shop.deliverProduct(milk);
-        shop.deliverProduct(bread);
-        shop.deliverProduct(shampoo);
-        shop.deliverProduct(expiredYogurt);
-
-        // -------------------------------------------------------
-        // 5. Показване на наличните стоки
-        // -------------------------------------------------------
+    private static void printAvailableProducts(Shop shop) {
         System.out.println("\n--- Налични стоки ---");
-        for (Product p : shop.getAvailableProducts()) {
-            System.out.println(p);
-        }
+        shop.getAvailableProducts().forEach(System.out::println);
+    }
 
-        // -------------------------------------------------------
-        // 6. Успешна продажба
-        // -------------------------------------------------------
+    private static void runSaleScenarios(Shop shop) {
+        Product milk = shop.findProductById(1);
+        Product bread = shop.findProductById(2);
+        Product shampoo = shop.findProductById(3);
+        Product expiredYogurt = shop.findProductById(4);
+
+        CashRegister reg1 = shop.getRegisters().get(0);
+        CashRegister reg2 = shop.getRegisters().get(1);
+
+        // Успешна продажба
         System.out.println("\n--- Продажба #1 (успешна) ---");
-        try {
-            List<ReceiptItem> items1 = List.of(
-                    new ReceiptItem(milk, 2),
-                    new ReceiptItem(bread, 1),
-                    new ReceiptItem(shampoo, 1)
-            );
-            Receipt receipt1 = register1.processSale(items1, 20.00);
-            System.out.println(receipt1);
-        } catch (InsufficientQuantityException | InsufficientFundsException e) {
-            System.err.println("Грешка: " + e.getMessage());
-        }
+        trySale(reg1, List.of(new ReceiptItem(milk, 2), new ReceiptItem(bread, 1), new ReceiptItem(shampoo, 1)), 20.00);
 
-        // -------------------------------------------------------
-        // 7. Продажба с недостатъчни пари
-        // -------------------------------------------------------
-        System.out.println("--- Продажба #2 (недостатъчно пари) ---");
-        try {
-            List<ReceiptItem> items2 = List.of(
-                    new ReceiptItem(milk, 5),
-                    new ReceiptItem(shampoo, 3)
-            );
-            register2.processSale(items2, 1.00);  // само 1 лев — ще гръмне
-        } catch (InsufficientFundsException e) {
-            System.err.println("Уловено изключение: " + e.getMessage());
-        } catch (InsufficientQuantityException e) {
-            System.err.println("Уловено изключение: " + e.getMessage());
-        }
+        // Недостатъчно пари
+        System.out.println("\n--- Продажба #2 (недостатъчно пари) ---");
+        trySale(reg2, List.of(new ReceiptItem(milk, 5), new ReceiptItem(shampoo, 3)), 1.00);
 
-        // -------------------------------------------------------
-        // 8. Продажба с недостатъчно количество
-        // -------------------------------------------------------
+        // Недостатъчно количество
         System.out.println("\n--- Продажба #3 (недостатъчно количество) ---");
-        try {
-            List<ReceiptItem> items3 = List.of(
-                    new ReceiptItem(milk, 999)  // 999 — много повече от наличното
-            );
-            register1.processSale(items3, 9999.00);
-        } catch (InsufficientQuantityException e) {
-            System.err.println("Уловено изключение: " + e.getMessage());
-        } catch (InsufficientFundsException e) {
-            System.err.println("Уловено изключение: " + e.getMessage());
-        }
+        trySale(reg1, List.of(new ReceiptItem(milk, 999)), 9999.00);
 
-        // -------------------------------------------------------
-        // 9. Опит за продажба на изтекла стока
-        // -------------------------------------------------------
+        // Изтекла стока
         System.out.println("\n--- Продажба #4 (изтекъл срок) ---");
+        trySale(reg1, List.of(new ReceiptItem(expiredYogurt, 1)), 50.00);
+    }
+
+    private static void trySale(CashRegister register, List<ReceiptItem> items, double money) {
         try {
-            List<ReceiptItem> items4 = List.of(
-                    new ReceiptItem(expiredYogurt, 1)
-            );
-            register1.processSale(items4, 50.00);
-        } catch (IllegalStateException e) {
-            System.err.println("Уловено изключение: " + e.getMessage());
-        } catch (InsufficientQuantityException | InsufficientFundsException e) {
+            Receipt receipt = register.processSale(items, money);
+            System.out.println(receipt);
+        } catch (InsufficientQuantityException | InsufficientFundsException | IllegalStateException e) {
             System.err.println("Уловено изключение: " + e.getMessage());
         }
+    }
 
-        // -------------------------------------------------------
-        // 10. Сериализация и десериализация на бележка
-        // -------------------------------------------------------
-        System.out.println("\n--- Сериализация и десериализация ---");
-        ReceiptService receiptService = new ReceiptService();
-        List<Receipt> receipts = register1.getIssuedReceipts();
-        if (!receipts.isEmpty()) {
-            Receipt first = receipts.get(0);
-            receiptService.serialize(first);
+    private static void demonstrateSerialization(Shop shop) {
+        System.out.println("\n--- Сериализация и четене от файл ---");
+        List<Receipt> receipts = shop.getRegisters().get(0).getIssuedReceipts();
+        if (receipts.isEmpty()) return;
 
-            Receipt loaded = receiptService.deserialize(first.getReceiptNumber());
-            if (loaded != null) {
-                System.out.println("Успешно заредена бележка #" + loaded.getReceiptNumber());
-            }
+        ReceiptService service = new ReceiptService();
+        Receipt receipt = receipts.get(0);
+
+        service.serialize(receipt);
+        Receipt loaded = service.deserialize(receipt.getReceiptNumber());
+        if (loaded != null) {
+            System.out.println("Заредена бележка #" + loaded.getReceiptNumber());
         }
 
-        // -------------------------------------------------------
-        // 11. Четене на бележка от текстов файл
-        // -------------------------------------------------------
-        System.out.println("\n--- Четене на бележка от файл ---");
-        if (!receipts.isEmpty()) {
-            String content = receiptService.readFromFile(receipts.get(0).getReceiptNumber());
-            System.out.println(content);
-        }
-
-        // -------------------------------------------------------
-        // 12. Финансов отчет
-        // -------------------------------------------------------
-        shop.printFinancialReport();
+        System.out.println(service.readFromFile(receipt.getReceiptNumber()));
     }
 }

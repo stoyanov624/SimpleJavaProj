@@ -2,10 +2,6 @@ package com.shop.model;
 
 import java.io.Serializable;
 
-/**
- * Касиер в магазина.
- * Има ID, име и месечна заплата.
- */
 public class Cashier implements Serializable {
 
     private static final long serialVersionUID = 1L;
