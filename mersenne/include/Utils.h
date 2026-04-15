@@ -1,14 +1,10 @@
 #pragma once
-#include <cstdint>
 #include <vector>
 
-typedef unsigned long long ull;
+const long long MAX_VAL = 2147483647LL;  // M_31 = 2^31 - 1 (8-мото просто число на Мерсен)
 
-const ull MAX_VAL = 2305843009213693951ULL;  // 2^61 - 1
-
-ull  gcd(ull a, ull b);
-ull  mulmod(ull a, ull b, ull m);
-ull  powmod(ull base, ull exp, ull mod);
-bool isPrime(ull n);
-int  getExponent(ull n);  // p такова, че n = 2^p - 1; иначе -1
-void sortAndUnique(std::vector<ull>& v);
+long long gcd(long long a, long long b);
+long long powmod(long long base, long long exp, long long mod);
+bool      isPrime(long long n);
+int       getExponent(long long n);
+void      sortAndUnique(std::vector<long long>& v);
