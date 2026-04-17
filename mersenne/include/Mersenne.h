@@ -5,20 +5,20 @@
 
 class Mersenne {
 public:
-    bool isMersenne(long long n);
-    bool isMersennePrime(long long n);
+    bool isMersenne(ll n);
+    bool isMersennePrime(ll n);
 
-    std::vector<long long> getDivisors(long long n);
-    std::vector<long long> getPrimeDivisors(long long n);
-    std::vector<long long> compositeDivisorsDiff(long long a, long long b);
-    std::vector<long long> inRange(long long low, long long high);
-    std::vector<long long> first(int n);
-    std::vector<long long> firstPrimes(int n);
-    std::vector<long long> getNPrimes(int n);
+    std::vector<ll>          getDivisors(ll n);
+    std::vector<ll>          getPrimeDivisors(ll n);
+    std::vector<ll>          compositeDivisorsDiff(ll a, ll b);
+    std::vector<ll>          inRange(ll low, ll high);
+    std::vector<ll>          first(int n);
+    std::vector<ll>          firstPrimes(int n);
+    std::vector<ll>          getNPrimes(int n);
     std::vector<std::string> perfectNumbersRepr(int n);
 
 private:
-    bool lucasLehmer(int p);
-    std::vector<long long> allDivisors(long long n);
-    std::vector<long long> compositeDivisors(long long n);
+    bool         lucasLehmer(int p);
+    std::vector<ll> allDivisors(ll n);
+    std::vector<ll> compositeDivisors(ll n);
 };
